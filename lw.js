@@ -27,18 +27,21 @@ const itemQueue = async.queue(function (task, callback) {
 	getBody(domain + '/CiteRelation/Ref?id=' + item.articleId, item);
 }, config.itemConcurrency);
 
-// 创建一个任务队列，并发：默认为2
+// 创建一个任务队列
 const pageQueue = async.queue(function (task, callback) {
 	data.getData(config.keyword, function (pageSize, totalPage, arr, err) {
 		callback(task);
 
 		if (err) {
-			logger.error('error:' + err.error);
+			if (err.message.indexOf('timeout') > -1) {
+				logger.error(err.config.url + ' timeout:' + err.config.timeout);
+			} else {
+				logger.error('error:' + err.error);
+			}
 		} else {
 			// logger.debug('pageSize:' + pageSize + ',totalPage:' + totalPage);
 			arr.forEach(function (e) {
 				itemQueue.push({item: e}, function (task, err) {
-					// logger.info('task:' + task);
 				});
 			});
 		}
@@ -47,7 +50,7 @@ const pageQueue = async.queue(function (task, callback) {
 
 // 获取网页内容
 function getBody(url, o) {
-	axios.get(url)
+	axios.get(url, {timeout: config.timeout})
 		.then(function (res) {
 			var obj = parseHtml(res.data);
 			if (obj.strArr.length > 0) {
@@ -61,6 +64,11 @@ function getBody(url, o) {
 				for (var page = 2; page <= obj.totalPage; page++) {
 					getBody(url + '&page=' + page, o);
 				}
+			}
+		})
+		.catch(function (error) {
+			if (error.message.indexOf('timeout') > -1) {
+				logger.error(error.config.url + ' timeout:' + error.config.timeout);
 			}
 		});
 }
@@ -116,6 +124,8 @@ function start() {
 			throw new Error('startPage should >=1!');
 		} else if (config.pageCount < 1) {
 			throw new Error('pageCount should >=1!');
+		} else if (config.timeout < 0) {
+			throw new Error('timeout should >0!');
 		}
 	} else {
 		throw new Error('keyword is null!');

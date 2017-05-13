@@ -8,10 +8,7 @@ module.exports = {
 	// 开始页
 	startPage: 1,
 	// 页数
-	pageCount: 1
+	pageCount: 5,
+	// 相应超时时间(ms)
+	timeout: 3000
 };
-
-// 1   3s
-// 10  10s
-// 30
-// 100

@@ -1,14 +1,18 @@
 const axios = require('axios'), // axios
 	cheerio = require('cheerio'), // cheerio
-	utils = require('./utils.js'); // utils
+	utils = require('./utils.js'), // utils
+	config = require('./config.js'); // config
 
 const domain = 'http://s.wanfangdata.com.cn';
 
 module.exports = {
 	getData: function (keyword, handler, page) {
-		axios.get(encodeURI(domain + '/Paper.aspx?q=' + keyword + '&f=top&p=' + page))
+		axios.get(encodeURI(domain + '/Paper.aspx?q=' + keyword + '&f=top&p=' + page), {timeout: config.timeout})
 			.then(function (res) {
 				parseHtml(res.data, handler);
+			})
+			.catch(function (error) {
+				handler(0, 0, null, error);
 			});
 	}
 };
