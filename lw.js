@@ -19,14 +19,6 @@ logger.setLevel('DEBUG');
 
 const domain = 'http://d.wanfangdata.com.cn';
 
-const itemQueue = async.queue(function (task, callback) {
-	var item = task.item;
-	callback(item);
-	// 生成md5防重
-	item.md5 = utils.md5(item.articleTitle);
-	getBody(domain + '/CiteRelation/Ref?id=' + item.articleId, item);
-}, config.itemConcurrency);
-
 // 创建一个任务队列
 const pageQueue = async.queue(function (task, callback) {
 	data.getData(config.keyword, function (pageSize, totalPage, arr, err) {
@@ -41,29 +33,50 @@ const pageQueue = async.queue(function (task, callback) {
 		} else {
 			// logger.debug('pageSize:' + pageSize + ',totalPage:' + totalPage);
 			arr.forEach(function (e) {
-				itemQueue.push({item: e}, function (task, err) {
-				});
+				// itemQueue.push({item: e}, function (task, err) {});
+				e.page = task.page;
+				// 生成md5防重
+				e.md5 = utils.md5(e.articleTitle);
 			});
+			mapLimit(arr);
 		}
 	}, task.page);
 }, config.pageConcurrency);
 
+function mapLimit(arr) {
+	async.mapLimit(arr, config.itemConcurrency, function (item, callback) {
+		getBody(item, callback);
+	}, function (err, results) {
+		if (err) {
+			console.log(err);
+		}
+
+		logger.info('finish:' + results.length + ',page:' + results[0].page);
+	});
+}
+
 // 获取网页内容
-function getBody(url, o) {
+function getBody(item, callback, page) {
+	var url = domain + '/CiteRelation/Ref?id=' + item.articleId;
+	if (page && page > 1) {
+		url += '&page=' + page;
+	}
 	axios.get(url, {timeout: config.timeout})
 		.then(function (res) {
 			var obj = parseHtml(res.data);
 			if (obj.strArr.length > 0) {
-				o.text = obj.strArr;
-				logger.info(o);
-				// dao.insert(o);
+				item.text = obj.strArr;
+				logger.info(item);
+				// dao.insert(item);
 			}
-			// 有分页
 			var index = url.indexOf('&page=');
-			if (!isNaN(obj.totalPage) && index < 0) {
+			if (index < 0 && !isNaN(obj.totalPage)) {
 				for (var page = 2; page <= obj.totalPage; page++) {
-					getBody(url + '&page=' + page, o);
+					getBody(item, callback, page);
 				}
+			}
+			if (!page) {
+				callback(null, item);
 			}
 		})
 		.catch(function (error) {
@@ -118,8 +131,8 @@ function start() {
 		logger.info('keyword:' + config.keyword);
 		if (config.pageConcurrency < 1 || config.pageConcurrency > 10) {
 			throw new Error('pageConcurrency should >=1 and <=10!');
-		} else if (config.itemConcurrency < 1 || config.itemConcurrency > 10) {
-			throw new Error('itemConcurrency should >=1 and <=10!');
+		} else if (config.itemConcurrency < 1 || config.itemConcurrency > 50) {
+			throw new Error('itemConcurrency should >=1 and <=50!');
 		} else if (config.startPage < 1) {
 			throw new Error('startPage should >=1!');
 		} else if (config.pageCount < 1) {
@@ -134,7 +147,7 @@ function start() {
 	// 添加任务队列
 	for (var i = 0; i < config.pageCount; i++) {
 		pageQueue.push({page: config.startPage + i}, function (task, err) {
-			logger.info('finish page:' + task.page);
+			// logger.info('finish page:' + task.page);
 		});
 	}
 }
