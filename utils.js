@@ -43,7 +43,7 @@ module.exports = {
 	 * @returns {Array|{index: number, input: string}}
 	 */
 	isEBOL: function (str) {
-		return /.*EB\/OL.*/.test(str);
+		return /.*OL].*/.test(str);
 	},
 	/**
 	 * md5
