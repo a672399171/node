@@ -6,6 +6,7 @@ var moment = require('moment'),
 var cookie = getFileContent('cookie');
 var pageCount = 0;
 var serverObj = {
+    "ws": 248,
     "2013": 278,
     "2014": 305,
     "2015": 333
@@ -17,14 +18,14 @@ var started = true;
 
 
 
-var serverName = "2013";
+var serverName = "ws";
 start(serverName);
 
 
 
 function start(serverName) {
     currentList = getCurrentCodeList(serverName + '/collect');
-    getList(96, serverObj[serverName]);
+    getList(1, serverObj[serverName]);
 }
 
 function getCurrentCodeList(filePath) {
@@ -43,7 +44,7 @@ function getCurrentCodeList(filePath) {
 // FreeShow%2CPublicity%2C
 function getList(pageIndex, serverCode) {
     request({
-        url: 'http://qibao.gyyx.cn/AdvancedSearch/RoleItemList?sex=%E4%B8%8D%E9%99%90&mainPoint=0&level=&minTao=&maxTao=&minCon=&maxCon=&minWiz=&maxWiz=&minStr=&maxStr=&minDex=&maxDex=&minImmortal=&maxImmortal=&minMagic=&maxMagic=&minPrice=&maxPrice=&serverId=' + serverCode + '&r=' + Math.random() + '&time=&orderState=&readed=&itemTypeID=0&state=0&order=0&pageIndex=' + pageIndex + '&pageSize=15&itemState=&keyWord=',
+        url: 'http://qibao.gyyx.cn/AdvancedSearch/RoleItemList?sex=%E4%B8%8D%E9%99%90&mainPoint=0&level=&minTao=&maxTao=&minCon=&maxCon=&minWiz=&maxWiz=&minStr=&maxStr=&minDex=&maxDex=&minImmortal=&maxImmortal=&minMagic=&maxMagic=&minPrice=&maxPrice=&serverId=' + serverCode + '&r=' + Math.random() + '&time=&orderState=&readed=&itemTypeID=0&state=FreeShow%2CPublicity%2C&order=0&pageIndex=' + pageIndex + '&pageSize=15&itemState=&keyWord=',
         method: 'GET',
         headers: {
             Cookie: cookie
