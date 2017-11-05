@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Hello, World</title>
+    <style type="text/css">
+        html {
+            height: 100%
+        }
+
+        body {
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+        }
+
+        #container {
+            height: 100%
+        }
+    </style>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=ZmVVxXvflAjkCKAXO9Zz6jKV9Gx3Gkf0"></script>
+</head>
+
+<body>
+<div id="container"></div>
+<script type="text/javascript">
+    var map = new BMap.Map("container");
+    var point = new BMap.Point(116.557408, 39.785256);
+    map.centerAndZoom(point, 25);
+
+    var marker = new BMap.Marker(point);
+    map.addOverlay(marker);
+
+    // 添加地图控件
+    map.addControl(new BMap.NavigationControl());
+    map.addControl(new BMap.ScaleControl());
+    map.addControl(new BMap.OverviewMapControl());
+    map.addControl(new BMap.MapTypeControl());
+    map.enableScrollWheelZoom(true);
+</script>
+</body>
+</html>
