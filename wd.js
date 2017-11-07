@@ -3,8 +3,9 @@ var moment = require('moment'),
     fs = require('fs'),
     async = require('async');
 
-var cookie = getFileContent('cookie');
-var pageCount = 0;
+var cookie = process.argv[3] || getFileContent('cookie');
+var serverName = process.argv[2];
+var pageCount = parseInt(process.argv[4]) || 0;
 var serverObj = {
     "ws": 248,
     "2013": 278,
@@ -17,9 +18,12 @@ var intervalArr = [];
 var started = true;
 
 
-
-var serverName = "ws";
-start(serverName);
+if(serverObj[serverName]) {
+    console.log('serverName:' + serverName);
+    start(serverName);
+} else {
+    console.error('server name not found!');
+}
 
 
 
