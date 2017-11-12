@@ -1,7 +1,8 @@
 var moment = require('moment'),
     request = require('request'),
     fs = require('fs'),
-    async = require('async');
+    async = require('async'),
+    parseString = require('xml2js').parseString;
 
 var cookie = '';
 var serverName = process.argv[2];
@@ -14,11 +15,11 @@ var serverObj = {
     "2015": 333
 };
 
-var currentList = [];
+var xmlList = [];
 var intervalArr = [];
 var started = true;
 
-
+// getRoleXml('39448558');
 if(serverObj[serverName]) {
     console.log('serverName:' + serverName);
     cookie = getFileContent(serverName + '/cookie');
@@ -30,7 +31,7 @@ if(serverObj[serverName]) {
 
 
 function start(serverName) {
-    currentList = getCurrentCodeList(serverName + '/collect');
+    xmlList = getCurrentCodeList(serverName + '/xml');
     getList(parseInt(process.argv[3]) || 1, serverObj[serverName]);
 }
 
@@ -65,7 +66,7 @@ function getList(pageIndex, serverCode) {
                 });
 
                 if (pageCount <= 0) {
-                    pageCount = body.PageCount/2;
+                    pageCount = body.PageCount;
                 }
             }
         } catch (e) {
@@ -86,8 +87,8 @@ function startPageCollect(index, itemArr) {
     intervalArr[index] = setInterval(function () {
         if (itemArr.length > 0) {
             var item = itemArr.pop();
-            if (currentList.indexOf(item + '') < 0 && started) {
-                getCollectCount(item);
+            if (xmlList.indexOf(item + '') < 0 && started) {
+				getRoleXml(item);
             }
         } else {
             clearInterval(intervalArr[index]);
@@ -96,27 +97,31 @@ function startPageCollect(index, itemArr) {
     }, 800);
 }
 
-function getCollectCount(code) {
-    console.log('getCollectCount:' + code);
+function getRoleXml(code) {
+    console.log('getRoleXml:' + code);
     request({
-        url: 'http://qibao.gyyx.cn/ItemSellOperate/CollectCount?ItemCode=' + code + '&r=' + Math.random(),
+        url: 'http://qibao.gyyx.cn/Buy/GetItemInfoXMLByItemId/' + code + '?=' + Math.random(),
         method: 'GET',
         headers: {
             Cookie: cookie
         }
     }, function (err, res, text) {
-        var body = undefined;
-        body = JSON.parse(text);
-        if (body.IsSuccess) {
-            if (body.Count > 5) {
-                fs.appendFileSync(serverName + '/collect', code + '\t' + body.Count + '\t' + moment().format() + '\r\n');
+        // console.log(text);
+		parseString(text, function (err, result) {
+		    if(err) {
+		        console.error(code + '--' + text);
             }
-        } else {
-            if (body.Data && body.Data === 'unauthorized') {
-                console.log('unauthorized re login!' + body);
-                started = false;
+            try {
+		        if(result.RoleInfo.role[0].wudao) {
+					var wudao = result.RoleInfo.role[0].wudao[0].wudao_stage[0];
+					if(wudao.indexOf('七层') > -1 || wudao.indexOf('八层') > -1 || wudao.indexOf('九层') > -1) {
+						fs.appendFileSync(serverName + '/xml', code + '\t' + wudao + '\t' + moment().format() + '\r\n');
+					}
+                }
+            } catch (e) {
+				console.error(code + '--' + text);
             }
-        }
+		});
     });
 }
 
