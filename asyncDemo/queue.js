@@ -3,38 +3,29 @@ var request = require('request'), // http
     fs = require('fs');
 
 // 类似于任务队列并发执行worker
-var cargo = async.cargo(function(tasks, callback) {
-    var count = 0;
-    for (var i=0; i<tasks.length; i++) {
-        // console.log("getOrderBank:" + tasks[i].orderId);
-        var orderId=tasks[i].orderId;
-        getOrderBank(orderId, function () {
-            count ++;
-            if(count >= tasks.length) {
-                callback();
-            }
-        });
-    }
-}, 10);
+var q = async.queue(function(task, callback) {
+    var orderId=task.orderId;
+    getOrderBank(orderId, callback);
+}, 2);
 
-var arr = getFileContent('../orderId');
-arr.forEach(function (orderId) {
-    cargo.push({orderId: orderId}, function(err) {
+// assign a callback
+q.drain = function() {
+    console.log('all items have been processed');
+};
+
+fs.readFile('../orderId', {
+    encoding: 'utf-8'
+},function (err, data) {
+    console.log(data.length);
+});
+
+// var arr = getFileContent('../orderId');
+/*arr.forEach(function (orderId) {
+    q.push({orderId: orderId}, function(err) {
         if(err) {
             console.error(err);
         }
     });
-});
-
-// add some items
-/*cargo.push({name: 'foo'}, function(err) {
-    console.log('finished processing foo');
-});
-cargo.push({name: 'bar'}, function(err) {
-    console.log('finished processing bar');
-});
-cargo.push({name: 'baz'}, function(err) {
-    console.log('finished processing baz');
 });*/
 
 // 获取文件内容
@@ -69,7 +60,7 @@ function getOrderBank(orderId, callback) {
     }, function (err, res, body) {
         var orderBank = body;
         if (orderBank && orderBank.result && orderBank.result.isSuccess) {
-            if(orderBank.paidIn > 0) {
+            if(orderBank.orderBankStatus === 5 && orderBank.paidIn > 0) {
                 console.log(orderId);
             }
         } else {

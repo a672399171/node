@@ -3,9 +3,9 @@ var moment = require('moment'),
     fs = require('fs'),
     async = require('async');
 
-var cookie = process.argv[3] || getFileContent('cookie');
+var cookie = getFileContent('cookie');
 var serverName = process.argv[2];
-var pageCount = parseInt(process.argv[4]) || 0;
+var pageCount = parseInt(process.argv[3]) || 0;
 var serverObj = {
     "ws": 248,
     "2013": 278,

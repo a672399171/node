@@ -1,13 +1,13 @@
 var request = require('request'), // http
 	fs = require('fs');
 
-/*var arr = getFileContent('orderId');
+var arr = getFileContent('orderId');
 console.log(arr.length);
 arr.forEach(function (orderId) {
-	getOrderBank(orderId);
-});*/
+	// getOrderBank(orderId);
+});
 // getOrderBank('60268848185');
-fs.appendFileSync('collect', 'dawd,');
+// fs.appendFileSync('collect', 'dawd,');
 
 
 // 获取文件内容
@@ -42,8 +42,9 @@ function getOrderBank(orderId) {
 	}, function (err, res, body) {
 		var orderBank = body;
 		if (orderBank && orderBank.result && orderBank.result.isSuccess) {
-			if (orderBank.realDuePrice < orderBank.realPayPrice) {
-				console.info(orderId + ' ' + (orderBank.realPayPrice - orderBank.realDuePrice).toFixed(2));
+			if(orderBank.orderBankStatus === 5) {
+                console.log(orderId);
+                fs.appendFileSync('cancel', orderId + '\r\n');
 			}
 		} else {
 			console.error(orderId);
