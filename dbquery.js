@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const url = "http://dbquery.jd.com/home/ajaxQueryData";
 // 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-const tableIndexArr = [0, 1, 2, 3];
+const tableIndexArr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 // 29351, 29352, 29353, 29354, 29355, 29356, 29357, 29358, 29359, 29360, 29361, 29362, 29363, 29364, 29365, 29366, 29367, 29368, 29369, 29370, 29371, 29372, 29373, 29374
 var idArr = [29351, 29352, 29353, 29354, 29355, 29356, 29357, 29358, 29359, 29360, 29361, 29362, 29363, 29364, 29365, 29366, 29367, 29368, 29369, 29370, 29371, 29372, 29373, 29374];
 var dbCount = [];
@@ -30,8 +30,9 @@ idArr.forEach(function (db, i) {
                 console.error(err);
             } else {
                 tableCountArr[table] = task.count;
-                if(task.orderIds && task.orderIds.length > 0) {
-                    // fs.appendFileSync('db/' + task.dbIndex + '_' + task.tableIndex, task.orderIds.join('\r\n'));
+                console.log(task.dbIndex, task.tableIndex, 'end');
+                if (task.orderIds && task.orderIds.length > 0) {
+                    fs.appendFileSync('db/' + task.dbIndex + '_' + task.tableIndex, task.orderIds.join('\r\n'));
                 }
             }
         });
@@ -49,12 +50,15 @@ function query(task, sqlAfter, sqlOrder, callback) {
         form: {id: id, sql: sql + sqlAfter + sqlOrder},
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Cookie': 'PHPSESSID=uaav1a6n45c23fdlpdv2q8qlp5; erp1.jd.com=418B6CC9DD4DD582CB928438B817886211FD2E6C26F91E65C660EEDF3DC628A079F6329AE9F54F9976835779E85BA6C178415C22A809AE7F894E78F89EBDE081B2D794FEB55E0C511771BEE65D19AA43; sso.jd.com=235d4fc9b79b477796f39e4e4cf3b46c; 3AB9D23F7A4B3C9B=772EXKGCRAYV4VL2AIJLNMHI274HHZBYBY6OEE43TD5WVZSHWPH62PG6KIO6ALDNA2WCUQMW6HAC3ZWIQQO7LA6XQY'
+            'Cookie': 'sso.jd.com=e8b1c416b6f54122b418a8d2c2d772c5'
         }
         // proxy
         // proxy: 'http://127.0.0.1:8888'
     }, function (err, res, body) {
         try {
+            if(!body) {
+                throw 'body为空';
+            }
             var maxId = -1;
             task.count += body.total;
             body.rows.forEach(function (e) {
@@ -67,7 +71,7 @@ function query(task, sqlAfter, sqlOrder, callback) {
                 callback(null, task);
             }
         } catch (e) {
-            console.error(e);
+            console.error(sql + sqlAfter + sqlOrder, body, e);
             callback(null, task);
         }
     })

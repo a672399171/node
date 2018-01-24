@@ -17,5 +17,8 @@ module.exports = {
         rl.on('close', function() {
             console.log("读取完毕！" + filePath);
         });
+    },
+    listFile: function (dir, callback) {
+        fs.readdir(dir, callback);
     }
 };
