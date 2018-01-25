@@ -10,18 +10,14 @@ const request = require('request');
     }
 });*/
 
+var finished = 0;
 (function () {
     start();
 
     // 任务具体执行内容
     const handler = function (task, callback) {
         var orderId = task.orderId;
-        // resetTask(orderId, callback);
-
-        setTimeout(function () {
-            console.log(queue.length());
-            callback();
-        }, 1);
+        orderConfirm(orderId, 'createpay', callback);
     };
 
     // 添加到任务队列
@@ -29,17 +25,21 @@ const request = require('request');
         if (queue.length() > 2000) {
             setTimeout(function () {
                 pushItem(line);
-            }, 1000)
+            }, 1000);
         } else {
             queue.push({orderId: line}, function (err) {
                 if (err) {
                     console.error(err);
                 }
+                finished ++;
+                if (finished % 100 === 0) {
+                    console.log('============== finished:' + finished + ' ==============');
+                }
             });
         }
     };
     // 初始化队列
-    const queue = initQueue(handler, 2);
+    const queue = initQueue(handler, 5);
 
     const fileArr = ['orderId'];
     fileArr.forEach(function (file) {
@@ -67,6 +67,28 @@ function initQueue(handler, count) {
     };
 
     return q;
+}
+
+// 台账 - 对账
+function orderConfirm(orderId, confirmType, callback) {
+    var url = "http://orderbank.soa.jd.local/service/order/orderConfirm";
+
+    request({
+        url: url,
+        method: 'POST',
+        json: true,
+        body: {
+            orderId: orderId,
+            confirmType: confirmType
+        }
+    }, function (err, res, body) {
+        if (body && body.result && body.result.isSuccess) {
+            // console.log(orderId, body);
+        } else {
+            console.error(orderId);
+        }
+        callback();
+    })
 }
 
 // 二清 - 重置任务
