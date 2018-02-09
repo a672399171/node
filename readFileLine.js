@@ -20,5 +20,10 @@ module.exports = {
     },
     listFile: function (dir, callback) {
         fs.readdir(dir, callback);
+    },
+    appendFile: function (filePath, data) {
+        fs.appendFile(filePath, data, 'utf8', function (err) {
+            if (err) throw err;
+        });
     }
 };
